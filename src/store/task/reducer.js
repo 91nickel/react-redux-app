@@ -1,6 +1,6 @@
 import * as ActionTypes from './actionTypes'
 
-export function taskReducer (state = [], action) {
+export function reducer (state = [], action) {
     switch (action.type) {
     case  ActionTypes.taskUpdated: {
         const newArray = [...state]

@@ -1,30 +1,47 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import { initiateStore } from 'store/store'
-import * as Actions from 'store/actions'
+import { Provider, useSelector, useDispatch } from 'react-redux'
+import configureStore from 'store/store'
+import { taskCompleted, titleChanged, taskDeleted, loadTasks, getTasks, getTasksLoadingStatus } from 'store/task'
+import { getError } from './store/error'
+import { createTask } from './store/task'
 
-const store = initiateStore()
+const store = configureStore()
 
 function App (params) {
-    let subscribed = false
-    const [state, setState] = useState(store.getState())
+
+    const state = useSelector(getTasks())
+    const isLoading = useSelector(getTasksLoadingStatus())
+    const error = useSelector(getError())
+
+    const dispatch = useDispatch()
 
     useEffect(() => {
-        if (!subscribed) {
-            store.subscribe(() => {
-                setState(store.getState())
-            })
-            subscribed = true
-        }
+        dispatch(loadTasks())
     }, [])
 
-    const completeTask = id => store.dispatch(Actions.taskCompleted(id))
-    const changeTitle = id => store.dispatch(Actions.titleChanged(id))
-    const deleteTask = id => store.dispatch(Actions.taskDeleted(id))
+    const newTask = {
+        title: 'Some new task',
+        completed: false,
+    }
+
+    const completeTask = id => dispatch(taskCompleted(id))
+    const changeTitle = id => dispatch(titleChanged(id))
+    const deleteTask = id => dispatch(taskDeleted(id))
+    const addTask = () => dispatch(createTask(newTask))
+
+    if (isLoading)
+        return <h1>Loading...</h1>
+
+    if (error)
+        return <p>{error}</p>
 
     return (
         <>
             <h1>App</h1>
+            <div>
+                <button onClick={addTask}>Add task</button>
+            </div>
             <ul>
                 {
                     state.map(el => {
@@ -41,7 +58,15 @@ function App (params) {
                     })
                 }
             </ul>
-        </>)
+        </>
+    )
 }
 
-ReactDOM.render(<React.StrictMode><App/></React.StrictMode>, document.getElementById('root'))
+ReactDOM.render(
+    <React.StrictMode>
+        <Provider store={store}>
+            <App/>
+        </Provider>
+    </React.StrictMode>,
+    document.getElementById('root')
+)
